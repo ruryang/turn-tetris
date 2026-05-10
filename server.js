@@ -82,7 +82,7 @@ const ADMIN_IDS = [
 const MAX_USERS = 100;
 
 const NAME_REGEX =
-  /^[a-zA-Z0-9_]{1,16}$/;
+  /^[a-zA-Z0-9_-]{1,16}$/;
 
 const joinCooldown =
   new Map();
