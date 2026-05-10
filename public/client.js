@@ -467,7 +467,7 @@ window.join = () => {
   }
 
   const valid =
-    /^[a-zA-Z0-9_]+$/;
+    /^[a-zA-Z0-9_-]+$/;
 
   if (!valid.test(name)) {
 
