@@ -118,7 +118,6 @@ const rankTurnTime = {
 
   "D+": 120,
   D: 120,
-  "D-": 120,
 
   UNRANKED: 120
 };
@@ -154,7 +153,6 @@ const rankTotalTime = {
 
   "D+": 600,
   D: 600,
-  "D-": 600,
 
   UNRANKED: 600
 };
