@@ -1,0 +1,433 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="
+      width=device-width,
+      initial-scale=1.0
+    "
+  >
+
+  <title>
+    TURN TETRIS
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+<body>
+
+  <!-- =========================
+       JOIN
+  ========================== -->
+
+  <div
+    id="joinScreen"
+    class="join"
+  >
+
+    <h1 class="title">
+      TURN TETRIS
+    </h1>
+
+    <div class="join-box">
+
+      <input
+        id="nameInput"
+        type="text"
+        maxlength="16"
+        placeholder="TETR.IO 닉네임 입력"
+      >
+
+      <button onclick="join()">
+        JOIN
+      </button>
+
+    </div>
+
+    <div class="join-info">
+
+      존재하는 TETR.IO 계정만
+      입장 가능합니다
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       LOBBY
+  ========================== -->
+
+  <div
+    id="lobby"
+    class="lobby"
+    style="display:none;"
+  >
+
+    <h1 class="title">
+      LOBBY
+    </h1>
+
+    <div
+      id="spectatorInfo"
+      class="spectator-info"
+    >
+      SPECTATORS: 0
+    </div>
+
+    <div class="lobby-container">
+
+      <!-- =========================
+           USER LIST
+      ========================== -->
+
+      <div class="user-box">
+
+        <div class="box-title">
+          PLAYERS
+        </div>
+
+        <div id="userList"></div>
+
+      </div>
+
+      <!-- =========================
+           MATCH
+      ========================== -->
+
+      <div class="match-box">
+
+        <!-- A -->
+
+        <div
+          class="slot-card"
+          id="cardA"
+        >
+
+          <div class="slot-title">
+            DEFENDER
+          </div>
+
+          <div
+            id="slotA"
+            class="slot-user"
+          >
+            EMPTY
+          </div>
+
+          <button
+            class="slot-button"
+            onclick="takeOrLeave('A')"
+          >
+            참여 / 나가기
+          </button>
+
+        </div>
+
+        <!-- VS -->
+
+        <div class="vs">
+          VS
+        </div>
+
+        <!-- B -->
+
+        <div
+          class="slot-card"
+          id="cardB"
+        >
+
+          <div class="slot-title">
+            CHALLENGER
+          </div>
+
+          <div
+            id="slotB"
+            class="slot-user"
+          >
+            EMPTY
+          </div>
+
+          <button
+            class="slot-button"
+            onclick="takeOrLeave('B')"
+          >
+            참여 / 나가기
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- =========================
+           CONTROL
+      ========================== -->
+
+      <div class="control-box">
+
+        <button
+          class="ready-button"
+          onclick="toggleReady()"
+        >
+          READY
+        </button>
+
+      </div>
+
+      <!-- =========================
+           STATUS
+      ========================== -->
+
+      <div
+        id="status"
+        class="status"
+      >
+        A: WAIT | B: WAIT
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       GAME
+  ========================== -->
+
+  <div
+    id="game"
+    style="display:none;"
+  >
+
+    <!-- TURN TOP -->
+
+    <div
+      class="turn-top"
+      id="turnTop"
+    >
+      TURN
+    </div>
+
+    <!-- TURN BUTTON -->
+
+    <div
+      class="turn-center"
+      onclick="turn()"
+    >
+      TURN
+    </div>
+
+    <!-- HUD -->
+
+    <div class="overlay">
+
+      <div class="bar">
+
+        <!-- =========================
+             SIDE A
+        ========================== -->
+
+        <div
+          class="side"
+          id="sideA"
+        >
+
+          <div class="player-top">
+
+            <img
+              id="avatarA"
+              class="hud-avatar"
+              src="default.png"
+              onerror="this.src='default.png'"
+            >
+
+            <div class="player-info">
+
+              <div
+                id="nameA"
+                class="player-name"
+              >
+                -
+              </div>
+
+              <div
+                id="turnA"
+                class="player-turn-time"
+              >
+                TURN: 0
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="hp-wrap">
+
+            <div
+              id="hpA"
+              class="hp"
+            ></div>
+
+          </div>
+
+          <div
+            id="totalA"
+            class="total-time"
+          >
+            0
+          </div>
+
+        </div>
+
+        <!-- =========================
+             CENTER
+        ========================== -->
+
+        <div class="center">
+
+          <div id="turn">
+            TURN
+          </div>
+
+          <div id="timer">
+            0
+          </div>
+
+        </div>
+
+        <!-- =========================
+             SIDE B
+        ========================== -->
+
+        <div
+          class="side"
+          id="sideB"
+        >
+
+          <div class="player-top">
+
+            <img
+              id="avatarB"
+              class="hud-avatar"
+              src="default.png"
+              onerror="this.src='default.png'"
+            >
+
+            <div class="player-info">
+
+              <div
+                id="nameB"
+                class="player-name"
+              >
+                -
+              </div>
+
+              <div
+                id="turnB"
+                class="player-turn-time"
+              >
+                TURN: 0
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="hp-wrap">
+
+            <div
+              id="hpB"
+              class="hp"
+            ></div>
+
+          </div>
+
+          <div
+            id="totalB"
+            class="total-time"
+          >
+            0
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       ADMIN PANEL
+  ========================== -->
+
+  <div
+    id="adminPanel"
+    class="admin-panel"
+    style="display:none;"
+  >
+
+    <div class="admin-title">
+      ADMIN PANEL
+    </div>
+
+    <div class="admin-buttons">
+
+      <button
+        class="admin-button"
+        onclick="adminEndGame()"
+      >
+        강제 종료
+      </button>
+
+      <button
+        class="admin-button"
+        onclick="adminKick('A')"
+      >
+        A 추방
+      </button>
+
+      <button
+        class="admin-button"
+        onclick="adminKick('B')"
+      >
+        B 추방
+      </button>
+
+      <button
+        class="admin-button"
+        onclick="adminNextTurn()"
+      >
+        턴 넘기기
+      </button>
+
+    </div>
+
+    <div class="admin-close">
+
+      ESC :
+      패널 닫기
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       SCRIPT
+  ========================== -->
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script src="client.js"></script>
+
+</body>
+
+</html>
