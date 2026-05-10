@@ -3,7 +3,16 @@
 
 <head>
 
+  <!-- =========================
+       META
+  ========================== -->
+
   <meta charset="UTF-8">
+
+  <meta
+    http-equiv="X-UA-Compatible"
+    content="IE=edge"
+  >
 
   <meta
     name="viewport"
@@ -13,9 +22,58 @@
     "
   >
 
+  <!-- =========================
+       SECURITY
+  ========================== -->
+
+  <meta
+    http-equiv="
+      Content-Security-Policy
+    "
+    content="
+      default-src 'self';
+      img-src
+        'self'
+        https://tetr.io
+        https://tetr.io/res
+        https://tetr.io/user-content
+        data:;
+      script-src
+        'self'
+        'unsafe-inline';
+      style-src
+        'self'
+        'unsafe-inline';
+      connect-src
+        'self'
+        ws:
+        wss:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    "
+  >
+
+  <!-- =========================
+       TITLE
+  ========================== -->
+
   <title>
     TURN TETRIS
   </title>
+
+  <!-- =========================
+       FAVICON
+  ========================== -->
+
+  <link
+    rel="icon"
+    href="favicon.ico"
+  >
+
+  <!-- =========================
+       STYLE
+  ========================== -->
 
   <link
     rel="stylesheet"
@@ -45,10 +103,18 @@
         id="nameInput"
         type="text"
         maxlength="16"
-        placeholder="TETR.IO 닉네임 입력"
+        placeholder="
+          TETR.IO 닉네임 입력
+        "
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
       >
 
-      <button onclick="join()">
+      <button
+        type="button"
+        onclick="join()"
+      >
         JOIN
       </button>
 
@@ -86,9 +152,7 @@
 
     <div class="lobby-container">
 
-      <!-- =========================
-           USER LIST
-      ========================== -->
+      <!-- USER LIST -->
 
       <div class="user-box">
 
@@ -100,9 +164,7 @@
 
       </div>
 
-      <!-- =========================
-           MATCH
-      ========================== -->
+      <!-- MATCH -->
 
       <div class="match-box">
 
@@ -125,6 +187,7 @@
           </div>
 
           <button
+            type="button"
             class="slot-button"
             onclick="takeOrLeave('A')"
           >
@@ -158,6 +221,7 @@
           </div>
 
           <button
+            type="button"
             class="slot-button"
             onclick="takeOrLeave('B')"
           >
@@ -168,13 +232,12 @@
 
       </div>
 
-      <!-- =========================
-           CONTROL
-      ========================== -->
+      <!-- CONTROL -->
 
       <div class="control-box">
 
         <button
+          type="button"
           class="ready-button"
           onclick="toggleReady()"
         >
@@ -183,9 +246,7 @@
 
       </div>
 
-      <!-- =========================
-           STATUS
-      ========================== -->
+      <!-- STATUS -->
 
       <div
         id="status"
@@ -207,7 +268,7 @@
     style="display:none;"
   >
 
-    <!-- TURN TOP -->
+    <!-- TURN -->
 
     <div
       class="turn-top"
@@ -231,9 +292,7 @@
 
       <div class="bar">
 
-        <!-- =========================
-             SIDE A
-        ========================== -->
+        <!-- SIDE A -->
 
         <div
           class="side"
@@ -246,7 +305,11 @@
               id="avatarA"
               class="hud-avatar"
               src="default.png"
-              onerror="this.src='default.png'"
+              alt="Player A Avatar"
+              draggable="false"
+              onerror="
+                this.src='default.png'
+              "
             >
 
             <div class="player-info">
@@ -260,7 +323,9 @@
 
               <div
                 id="turnA"
-                class="player-turn-time"
+                class="
+                  player-turn-time
+                "
               >
                 TURN: 0
               </div>
@@ -287,9 +352,7 @@
 
         </div>
 
-        <!-- =========================
-             CENTER
-        ========================== -->
+        <!-- CENTER -->
 
         <div class="center">
 
@@ -303,9 +366,7 @@
 
         </div>
 
-        <!-- =========================
-             SIDE B
-        ========================== -->
+        <!-- SIDE B -->
 
         <div
           class="side"
@@ -318,7 +379,11 @@
               id="avatarB"
               class="hud-avatar"
               src="default.png"
-              onerror="this.src='default.png'"
+              alt="Player B Avatar"
+              draggable="false"
+              onerror="
+                this.src='default.png'
+              "
             >
 
             <div class="player-info">
@@ -332,7 +397,9 @@
 
               <div
                 id="turnB"
-                class="player-turn-time"
+                class="
+                  player-turn-time
+                "
               >
                 TURN: 0
               </div>
@@ -382,6 +449,7 @@
     <div class="admin-buttons">
 
       <button
+        type="button"
         class="admin-button"
         onclick="adminEndGame()"
       >
@@ -389,6 +457,7 @@
       </button>
 
       <button
+        type="button"
         class="admin-button"
         onclick="adminKick('A')"
       >
@@ -396,6 +465,7 @@
       </button>
 
       <button
+        type="button"
         class="admin-button"
         onclick="adminKick('B')"
       >
@@ -403,6 +473,7 @@
       </button>
 
       <button
+        type="button"
         class="admin-button"
         onclick="adminNextTurn()"
       >

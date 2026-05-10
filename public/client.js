@@ -8,6 +8,18 @@ let turnCooldown = false;
 
 let isAdmin = false;
 
+let adminCooldown = false;
+
+// ========================
+// SANITIZE
+// ========================
+
+function sanitize(str) {
+
+  return String(str || "")
+    .replace(/[<>&"'`]/g, "");
+}
+
 // ========================
 // ELEMENT
 // ========================
@@ -56,9 +68,6 @@ function createAdminPanel() {
 
   panel.style.boxShadow =
     "0 0 40px rgba(0,255,204,0.4)";
-
-  panel.style.display =
-    "none";
 
   panel.innerHTML = `
 
@@ -112,8 +121,6 @@ window.addEventListener(
 
   (e) => {
 
-    // SHIFT + A
-
     if (
 
       e.shiftKey &&
@@ -123,16 +130,12 @@ window.addEventListener(
 
     ) {
 
-      // 이미 관리자면 패널 토글
-
       if (isAdmin) {
 
         toggleAdminPanel();
 
         return;
       }
-
-      // 로그인
 
       const password =
         prompt(
@@ -146,8 +149,6 @@ window.addEventListener(
         password
       );
     }
-
-    // ESC
 
     if (
       e.key === "Escape"
@@ -202,26 +203,59 @@ function closeAdminPanel() {
 window.adminEndGame =
   () => {
 
+    if (adminCooldown)
+      return;
+
+    adminCooldown = true;
+
     socket.emit(
       "adminEndGame"
     );
+
+    setTimeout(() => {
+
+      adminCooldown = false;
+
+    }, 1000);
   };
 
 window.adminKick =
   (slot) => {
 
+    if (adminCooldown)
+      return;
+
+    adminCooldown = true;
+
     socket.emit(
       "adminKickSlot",
       slot
     );
+
+    setTimeout(() => {
+
+      adminCooldown = false;
+
+    }, 1000);
   };
 
 window.adminNextTurn =
   () => {
 
+    if (adminCooldown)
+      return;
+
+    adminCooldown = true;
+
     socket.emit(
       "adminNextTurn"
     );
+
+    setTimeout(() => {
+
+      adminCooldown = false;
+
+    }, 500);
   };
 
 // ========================
@@ -367,14 +401,16 @@ function createUserHTML(user) {
       <div class="user-info">
 
         <div class="user-name">
-          ${user.name}
+          ${sanitize(user.name)}
         </div>
 
         <div class="
           rank
           ${rankClass}
         ">
-          [${user.rank || "UNRANKED"}]
+          [${sanitize(
+            user.rank || "UNRANKED"
+          )}]
         </div>
 
       </div>
@@ -403,7 +439,30 @@ window.join = () => {
     return;
   }
 
-  socket.emit("join", { name });
+  if (name.length > 16) {
+
+    alert(
+      "닉네임이 너무 깁니다."
+    );
+
+    return;
+  }
+
+  const valid =
+    /^[a-zA-Z0-9_]+$/;
+
+  if (!valid.test(name)) {
+
+    alert(
+      "영문, 숫자, _ 만 가능합니다."
+    );
+
+    return;
+  }
+
+  socket.emit("join", {
+    name
+  });
 };
 
 // ========================
@@ -512,8 +571,10 @@ socket.on(
   (msg) => {
 
     alert(
-      msg ||
-      "존재하지 않는 TETR.IO 유저입니다."
+      sanitize(
+        msg ||
+        "존재하지 않는 TETR.IO 유저입니다."
+      )
     );
   }
 );
@@ -531,8 +592,6 @@ socket.on(
 
     if (!joined) return;
 
-    // SCREEN
-
     document
       .getElementById("lobby")
       .style.display =
@@ -548,8 +607,6 @@ socket.on(
       data.phase === "PLAYING"
         ? "block"
         : "none";
-
-    // USER LIST
 
     document
       .getElementById("userList")
@@ -568,22 +625,22 @@ socket.on(
             >
 
             <span>
-              ${u.name}
+              ${sanitize(u.name)}
             </span>
 
             <span class="
               rank
               ${getRankClass(u.rank)}
             ">
-              [${u.rank || "UNRANKED"}]
+              [${sanitize(
+                u.rank || "UNRANKED"
+              )}]
             </span>
 
           </div>
         `;
 
       }).join("");
-
-    // SLOT
 
     const userA =
       findUserById(data.slots.A);
@@ -600,8 +657,6 @@ socket.on(
       .getElementById("slotB")
       .innerHTML =
       createUserHTML(userB);
-
-    // READY
 
     const cardA =
       document.getElementById("cardA");
@@ -620,11 +675,9 @@ socket.on(
       cardB.classList.add("ready");
     }
 
-    // STATUS
-
     document
       .getElementById("status")
-      .innerText =
+      .textContent =
 
       `A: ${
         data.ready.A
@@ -636,8 +689,6 @@ socket.on(
           : "WAIT"
       }`;
 
-    // SPECTATORS
-
     const spectators =
 
       data.users.length -
@@ -648,7 +699,7 @@ socket.on(
 
     document
       .getElementById("spectatorInfo")
-      .innerText =
+      .textContent =
 
       `SPECTATORS: ${spectators}`;
   }
@@ -681,25 +732,21 @@ setInterval(() => {
   const userB =
     findUserById(state.slots.B);
 
-  // NAME
-
   document
     .getElementById("nameA")
-    .innerHTML =
+    .textContent =
 
     userA
-      ? `${userA.name}`
+      ? sanitize(userA.name)
       : "-";
 
   document
     .getElementById("nameB")
-    .innerHTML =
+    .textContent =
 
     userB
-      ? `${userB.name}`
+      ? sanitize(userB.name)
       : "-";
-
-  // AVATAR
 
   document
     .getElementById("avatarA")
@@ -711,8 +758,6 @@ setInterval(() => {
     .src =
       getAvatar(userB);
 
-  // TURN
-
   const currentName =
 
     state.currentPlayer === "A"
@@ -721,14 +766,14 @@ setInterval(() => {
 
   document
     .getElementById("turn")
-    .innerText =
+    .textContent =
 
-    "TURN: " + currentName;
+    "TURN: " +
+    sanitize(currentName);
 
-  turnTop.innerText =
-    currentName + " TURN";
-
-  // TIMER
+  turnTop.textContent =
+    sanitize(currentName)
+    + " TURN";
 
   const timeLeft =
     Math.ceil(
@@ -739,10 +784,8 @@ setInterval(() => {
 
     );
 
-  timerEl.innerText =
+  timerEl.textContent =
     timeLeft;
-
-  // RESET
 
   timerEl.classList.remove(
     "danger-timer"
@@ -758,8 +801,6 @@ setInterval(() => {
     "danger-player"
   );
 
-  // ACTIVE
-
   if (
     state.currentPlayer === "A"
   ) {
@@ -774,8 +815,6 @@ setInterval(() => {
       "active-player"
     );
   }
-
-  // DANGER
 
   if (timeLeft <= 10) {
 
@@ -799,11 +838,9 @@ setInterval(() => {
     }
   }
 
-  // TOTAL
-
   document
     .getElementById("totalA")
-    .innerText =
+    .textContent =
 
     Math.ceil(
       state.totalTime.A
@@ -811,13 +848,11 @@ setInterval(() => {
 
   document
     .getElementById("totalB")
-    .innerText =
+    .textContent =
 
     Math.ceil(
       state.totalTime.B
     );
-
-  // HP
 
   const max = 1200;
 
@@ -851,7 +886,7 @@ socket.on(
   (player) => {
 
     alert(
-      player +
+      sanitize(player) +
       " 턴 시간 패배!"
     );
   }
@@ -863,7 +898,7 @@ socket.on(
   (player) => {
 
     alert(
-      player +
+      sanitize(player) +
       " 총 시간 패배!"
     );
   }

@@ -6,10 +6,14 @@
   box-sizing: border-box;
 }
 
+html,
 body {
-
   margin: 0;
+  width: 100%;
+  height: 100%;
+}
 
+body {
   font-family:
     Arial,
     sans-serif;
@@ -26,12 +30,40 @@ body {
   overflow: hidden;
 
   text-align: center;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button,
 input {
-
   font-family: inherit;
+}
+
+button {
+  user-select: none;
+}
+
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* =========================
+   SECURITY / SAFE UI
+========================= */
+
+.hidden {
+  display: none !important;
+}
+
+.no-pointer {
+  pointer-events: none;
+}
+
+.safe-text {
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* =========================
@@ -67,6 +99,8 @@ input {
 
   justify-content: center;
   align-items: center;
+
+  padding: 20px;
 }
 
 .join-box {
@@ -74,11 +108,16 @@ input {
   display: flex;
 
   gap: 14px;
+
+  flex-wrap: wrap;
+
+  justify-content: center;
 }
 
 .join input {
 
   width: 320px;
+  max-width: 90vw;
 
   padding: 16px;
 
@@ -93,8 +132,16 @@ input {
 
   outline: none;
 
+  transition: 0.15s;
+
   box-shadow:
     0 0 10px rgba(255,255,255,0.05);
+}
+
+.join input:focus {
+
+  box-shadow:
+    0 0 15px rgba(0,255,204,0.35);
 }
 
 .join button {
@@ -130,6 +177,15 @@ input {
     0 0 20px rgba(0,255,204,0.6);
 }
 
+.join button:disabled {
+
+  opacity: 0.5;
+  cursor: not-allowed;
+
+  transform: none;
+  box-shadow: none;
+}
+
 .join-info {
 
   margin-top: 18px;
@@ -157,6 +213,12 @@ input {
 .lobby {
 
   padding-top: 40px;
+  padding-bottom: 40px;
+
+  width: 100%;
+  height: 100%;
+
+  overflow-y: auto;
 }
 
 .lobby-container {
@@ -168,6 +230,8 @@ input {
   align-items: center;
 
   gap: 24px;
+
+  padding-bottom: 40px;
 }
 
 .spectator-info {
@@ -219,6 +283,21 @@ input {
   flex-direction: column;
 
   gap: 12px;
+
+  max-height: 300px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+}
+
+#userList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#userList::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
 }
 
 .user-list-item {
@@ -235,6 +314,15 @@ input {
 
   background:
     rgba(255,255,255,0.04);
+
+  overflow: hidden;
+}
+
+.user-list-item span {
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mini-avatar {
@@ -247,6 +335,8 @@ input {
   object-fit: cover;
 
   border: 2px solid #333;
+
+  flex-shrink: 0;
 }
 
 /* =========================
@@ -260,6 +350,10 @@ input {
   align-items: center;
 
   gap: 40px;
+
+  flex-wrap: wrap;
+
+  justify-content: center;
 }
 
 .slot-card {
@@ -281,6 +375,8 @@ input {
 
   box-shadow:
     0 0 15px rgba(255,255,255,0.08);
+
+  overflow: hidden;
 }
 
 .slot-card:hover {
@@ -307,6 +403,8 @@ input {
   align-items: center;
 
   min-height: 120px;
+
+  overflow: hidden;
 }
 
 .slot-button {
@@ -389,6 +487,10 @@ input {
   align-items: center;
 
   gap: 16px;
+
+  max-width: 100%;
+
+  overflow: hidden;
 }
 
 .avatar {
@@ -404,6 +506,8 @@ input {
 
   box-shadow:
     0 0 15px rgba(0,255,204,0.45);
+
+  flex-shrink: 0;
 }
 
 .user-info {
@@ -413,6 +517,8 @@ input {
   flex-direction: column;
 
   align-items: flex-start;
+
+  overflow: hidden;
 }
 
 .user-name {
@@ -420,6 +526,12 @@ input {
   font-size: 28px;
 
   font-weight: bold;
+
+  max-width: 180px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-info {
@@ -433,6 +545,8 @@ input {
   justify-content: center;
 
   gap: 4px;
+
+  overflow: hidden;
 }
 
 /* =========================
@@ -462,66 +576,23 @@ input {
     0 0 8px currentColor;
 }
 
-.rank-xplus {
-
-  color: #ff4d4d;
-}
-
-.rank-x {
-
-  color: #ff9933;
-}
-
-.rank-u {
-
-  color: #b266ff;
-}
-
-.rank-ss {
-
-  color: #4da6ff;
-}
-
-.rank-splus {
-
-  color: #33ccff;
-}
-
-.rank-s {
-
-  color: #33cc66;
-}
-
-.rank-aplus {
-
-  color: #66ff66;
-}
-
-.rank-a {
-
-  color: #99ff66;
-}
+.rank-xplus { color: #ff4d4d; }
+.rank-x { color: #ff9933; }
+.rank-u { color: #b266ff; }
+.rank-ss { color: #4da6ff; }
+.rank-splus { color: #33ccff; }
+.rank-s { color: #33cc66; }
+.rank-aplus { color: #66ff66; }
+.rank-a { color: #99ff66; }
 
 .rank-bplus,
 .rank-b {
-
   color: #bbbbbb;
 }
 
-.rank-z {
-
-  color: #ff66cc;
-}
-
-.rank-unranked {
-
-  color: #666;
-}
-
-.rank-default {
-
-  color: white;
-}
+.rank-z { color: #ff66cc; }
+.rank-unranked { color: #666; }
+.rank-default { color: white; }
 
 /* =========================
    CONTROL
@@ -556,6 +627,13 @@ input {
   color: black;
 
   font-weight: bold;
+
+  transition: 0.15s;
+}
+
+.ready-button:hover {
+
+  transform: scale(1.03);
 }
 
 .status {
@@ -576,6 +654,8 @@ input {
   height: 100vh;
 
   position: relative;
+
+  overflow: hidden;
 }
 
 /* =========================
@@ -601,6 +681,8 @@ input {
 
   animation:
     pulse 1.5s infinite;
+
+  z-index: 10;
 }
 
 /* =========================
@@ -645,6 +727,8 @@ input {
 
   box-shadow:
     0 0 35px rgba(0,255,204,0.55);
+
+  z-index: 5;
 }
 
 .turn-center:hover {
@@ -702,6 +786,8 @@ input {
 .side {
 
   width: 32%;
+
+  transition: 0.15s;
 }
 
 .player-top {
@@ -713,6 +799,8 @@ input {
   gap: 14px;
 
   margin-bottom: 12px;
+
+  overflow: hidden;
 }
 
 .hud-avatar {
@@ -725,6 +813,8 @@ input {
   object-fit: cover;
 
   border: 3px solid #00ffcc;
+
+  flex-shrink: 0;
 }
 
 .player-name {
@@ -732,6 +822,12 @@ input {
   font-size: 30px;
 
   font-weight: bold;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  max-width: 220px;
 }
 
 .center {
@@ -800,12 +896,10 @@ input {
 }
 
 #totalA {
-
   color: #00ffcc;
 }
 
 #totalB {
-
   color: #00aaff;
 }
 
@@ -851,6 +945,7 @@ input {
     translate(-50%, -50%);
 
   width: 320px;
+  max-width: 92vw;
 
   padding: 28px;
 
@@ -865,6 +960,8 @@ input {
     0 0 40px rgba(0,255,204,0.4);
 
   z-index: 9999;
+
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .admin-title {
@@ -937,7 +1034,6 @@ input {
 @keyframes blink {
 
   50% {
-
     opacity: 0.35;
   }
 }
@@ -945,7 +1041,6 @@ input {
 @keyframes pulse {
 
   50% {
-
     opacity: 0.65;
   }
 }
@@ -978,27 +1073,22 @@ input {
 @media (max-width: 900px) {
 
   body {
-
     overflow-y: auto;
   }
 
   .match-box {
-
     flex-direction: column;
   }
 
   .slot-card {
-
     width: 92vw;
   }
 
   .user-box {
-
     width: 92vw;
   }
 
   .turn-top {
-
     top: 5%;
   }
 
@@ -1011,23 +1101,27 @@ input {
   }
 
   #timer {
-
     font-size: 62px;
   }
 
   .bar {
-
     flex-direction: column;
   }
 
   .side,
   .center {
-
     width: 100%;
   }
 
   .admin-panel {
-
     width: 90vw;
+  }
+
+  .player-name {
+    max-width: 160px;
+  }
+
+  .user-name {
+    max-width: 140px;
   }
 }

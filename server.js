@@ -1,24 +1,57 @@
 ﻿const express = require("express");
 const http = require("http");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 const { Server } = require("socket.io");
 
 const app = express();
+
+app.set("trust proxy", 1);
+
+// ========================
+// SECURITY
+// ========================
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
+
+app.use(
+  rateLimit({
+    windowMs: 10 * 1000,
+    max: 60
+  })
+);
+
+// ========================
+// SERVER
+// ========================
 
 const server =
   http.createServer(app);
 
 const io =
-  new Server(server);
+  new Server(server, {
+
+    cors: {
+      origin: "*"
+    },
+
+    maxHttpBufferSize:
+      1e5
+  });
 
 // ========================
 // SOCKET
 // ========================
 
 io.engine.opts.pingTimeout =
-  60000;
+  30000;
 
 io.engine.opts.pingInterval =
-  25000;
+  10000;
 
 // ========================
 // STATIC
@@ -33,16 +66,26 @@ app.use(
 // ========================
 
 const ADMIN_PASSWORD =
-  "1234";
-
-// TETR.IO 내부 ID
-// fetchTetrioUser().id 기준
+  process.env.ADMIN_PASSWORD ||
+  "CHANGE_THIS_PASSWORD";
 
 const ADMIN_IDS = [
 
   "6458c7de54481fd487d8b478"
 
 ];
+
+// ========================
+// LIMIT
+// ========================
+
+const MAX_USERS = 100;
+
+const NAME_REGEX =
+  /^[a-zA-Z0-9_]{1,16}$/;
+
+const joinCooldown =
+  new Map();
 
 // ========================
 // RANK TURN TIME
@@ -117,7 +160,7 @@ const rankTotalTime = {
 };
 
 // ========================
-// GET TIME
+// TIME
 // ========================
 
 function getTurnTime(rank) {
@@ -181,13 +224,25 @@ let gameState =
   createState();
 
 // ========================
+// SAFE EMIT
+// ========================
+
+function broadcastState() {
+
+  io.emit(
+    "update",
+    gameState
+  );
+}
+
+// ========================
 // RESET PLAYERS
 // ========================
 
 function clearPlayers() {
 
   for (
-    let [id, socket]
+    const [id, socket]
     of io.of("/").sockets
   ) {
 
@@ -209,7 +264,18 @@ function findUserBySocket(
 }
 
 // ========================
-// FETCH TETRIO USER
+// SANITIZE
+// ========================
+
+function sanitizeText(text) {
+
+  return String(text || "")
+    .replace(/[<>]/g, "")
+    .trim();
+}
+
+// ========================
+// FETCH USER
 // ========================
 
 async function fetchTetrioUser(
@@ -222,8 +288,6 @@ async function fetchTetrioUser(
       username
         .trim()
         .toLowerCase();
-
-    // USER API
 
     const userResponse =
       await fetch(
@@ -243,8 +307,6 @@ async function fetchTetrioUser(
     const user =
       userJson.data;
 
-    // LEAGUE API
-
     let leagueRank =
       "UNRANKED";
 
@@ -259,8 +321,11 @@ async function fetchTetrioUser(
         await leagueResponse.json();
 
       if (
+
         leagueJson.success &&
+
         leagueJson.data
+
       ) {
 
         const rank =
@@ -278,14 +343,12 @@ async function fetchTetrioUser(
         }
       }
 
-    } catch (err) {
+    } catch {
 
       console.log(
         "league api fail"
       );
     }
-
-    // AVATAR
 
     let avatar =
       "https://tetr.io/res/avatar.png";
@@ -304,7 +367,9 @@ async function fetchTetrioUser(
         user._id,
 
       name:
-        user.username,
+        sanitizeText(
+          user.username
+        ),
 
       rank:
         leagueRank,
@@ -332,6 +397,12 @@ io.on(
     socket.isAdmin =
       false;
 
+    socket.player =
+      null;
+
+    socket.joined =
+      false;
+
     socket.emit(
       "update",
       gameState
@@ -346,75 +417,140 @@ io.on(
 
       async ({ name }) => {
 
-        const already =
-          gameState.users.find(
-            (u) =>
-              u.name
-                .toLowerCase() ===
+        try {
+
+          if (
+            socket.joined
+          ) return;
+
+          if (
+            gameState.users.length >=
+            MAX_USERS
+          ) {
+
+            socket.emit(
+              "joinFail",
+              "서버 인원 초과"
+            );
+
+            return;
+          }
+
+          const now =
+            Date.now();
+
+          const last =
+            joinCooldown.get(
+              socket.id
+            ) || 0;
+
+          if (
+            now - last <
+            3000
+          ) {
+
+            socket.emit(
+              "joinFail",
+              "잠시 후 다시 시도해주세요."
+            );
+
+            return;
+          }
+
+          joinCooldown.set(
+            socket.id,
+            now
+          );
+
+          name =
+            sanitizeText(name);
+
+          if (
+            !NAME_REGEX.test(name)
+          ) {
+
+            socket.emit(
+              "joinFail",
+              "닉네임 형식 오류"
+            );
+
+            return;
+          }
+
+          const already =
+            gameState.users.find(
+              (u) =>
+
+                u.name
+                  .toLowerCase() ===
+
+                name
+                  .toLowerCase()
+            );
+
+          if (already) {
+
+            socket.emit(
+              "joinFail",
+              "이미 접속중인 유저입니다."
+            );
+
+            return;
+          }
+
+          const tetrioUser =
+            await fetchTetrioUser(
               name
-                .toLowerCase()
-          );
+            );
 
-        if (already) {
+          if (
+            !tetrioUser
+          ) {
+
+            socket.emit(
+              "joinFail",
+              "존재하지 않는 유저"
+            );
+
+            return;
+          }
+
+          socket.joined =
+            true;
+
+          socket.name =
+            tetrioUser.name;
+
+          socket.tetrioId =
+            tetrioUser.tetrioId;
+
+          gameState.users.push({
+
+            id: socket.id,
+
+            tetrioId:
+              tetrioUser.tetrioId,
+
+            name:
+              tetrioUser.name,
+
+            rank:
+              tetrioUser.rank,
+
+            avatar:
+              tetrioUser.avatar
+          });
 
           socket.emit(
-            "joinFail",
-            "이미 접속중인 유저입니다."
+            "joinSuccess"
           );
 
-          return;
+          broadcastState();
+
+        } catch (err) {
+
+          console.error(err);
         }
-
-        const tetrioUser =
-          await fetchTetrioUser(
-            name
-          );
-
-        if (
-          !tetrioUser
-        ) {
-
-          socket.emit(
-            "joinFail",
-            "존재하지 않는 TETR.IO 유저입니다."
-          );
-
-          return;
-        }
-
-        // 저장
-
-        socket.name =
-          tetrioUser.name;
-
-        socket.tetrioId =
-          tetrioUser.tetrioId;
-
-        gameState.users.push({
-
-          id: socket.id,
-
-          tetrioId:
-            tetrioUser.tetrioId,
-
-          name:
-            tetrioUser.name,
-
-          rank:
-            tetrioUser.rank,
-
-          avatar:
-            tetrioUser.avatar
-        });
-
-        socket.emit(
-          "joinSuccess"
-        );
-
-        io.emit(
-          "update",
-          gameState
-        );
       }
     );
 
@@ -426,6 +562,11 @@ io.on(
       "adminLogin",
 
       (password) => {
+
+        if (
+          typeof password !==
+          "string"
+        ) return;
 
         const allowed =
 
@@ -464,6 +605,16 @@ io.on(
       (slot) => {
 
         if (
+          !["A", "B"]
+            .includes(slot)
+        ) return;
+
+        if (
+          gameState.phase !==
+          "LOBBY"
+        ) return;
+
+        if (
           socket.player
         ) return;
 
@@ -480,10 +631,7 @@ io.on(
             slot;
         }
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
 
@@ -514,10 +662,7 @@ io.on(
         socket.player =
           null;
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
 
@@ -531,19 +676,21 @@ io.on(
       () => {
 
         if (
+          gameState.phase !==
+          "LOBBY"
+        ) return;
+
+        if (
           !socket.player
         ) return;
 
         const p =
           socket.player;
 
-        gameState
-          .ready[p] =
+        gameState.ready[p] =
 
           !gameState
             .ready[p];
-
-        // START
 
         if (
 
@@ -563,28 +710,32 @@ io.on(
               gameState.slots.B
             );
 
-          // TOTAL
+          if (
+            !userA ||
+            !userB
+          ) {
+
+            return;
+          }
 
           gameState.totalTime.A =
             getTotalTime(
-              userA?.rank
+              userA.rank
             );
 
           gameState.totalTime.B =
             getTotalTime(
-              userB?.rank
+              userB.rank
             );
-
-          // TURN
 
           gameState.turnTime.A =
             getTurnTime(
-              userA?.rank
+              userA.rank
             );
 
           gameState.turnTime.B =
             getTurnTime(
-              userB?.rank
+              userB.rank
             );
 
           gameState.currentPlayer =
@@ -597,10 +748,7 @@ io.on(
             Date.now();
         }
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
 
@@ -652,15 +800,12 @@ io.on(
         gameState.lastUpdate =
           Date.now();
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
 
     // ========================
-    // ADMIN END GAME
+    // ADMIN END
     // ========================
 
     socket.on(
@@ -684,20 +829,12 @@ io.on(
           "adminGameEnded"
         );
 
-        io.emit(
-          "update",
-          gameState
-        );
-
-        console.log(
-          socket.name +
-          " force ended game"
-        );
+        broadcastState();
       }
     );
 
     // ========================
-    // ADMIN KICK SLOT
+    // ADMIN KICK
     // ========================
 
     socket.on(
@@ -707,6 +844,11 @@ io.on(
 
         if (
           !socket.isAdmin
+        ) return;
+
+        if (
+          !["A", "B"]
+            .includes(slot)
         ) return;
 
         const targetId =
@@ -730,16 +872,7 @@ io.on(
         gameState.ready[slot] =
           false;
 
-        io.emit(
-          "update",
-          gameState
-        );
-
-        console.log(
-          socket.name +
-          " kicked slot " +
-          slot
-        );
+        broadcastState();
       }
     );
 
@@ -790,10 +923,7 @@ io.on(
         gameState.lastUpdate =
           Date.now();
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
 
@@ -805,6 +935,10 @@ io.on(
       "disconnect",
 
       () => {
+
+        joinCooldown.delete(
+          socket.id
+        );
 
         gameState.users =
 
@@ -827,10 +961,7 @@ io.on(
           ] = false;
         }
 
-        io.emit(
-          "update",
-          gameState
-        );
+        broadcastState();
       }
     );
   }
@@ -863,19 +994,13 @@ setInterval(() => {
   const current =
     gameState.currentPlayer;
 
-  // TURN
-
   gameState.turnTime[
     current
   ] -= delta;
 
-  // TOTAL
-
   gameState.totalTime[
     current
   ] -= delta;
-
-  // TURN LOSE
 
   if (
     gameState.turnTime[
@@ -899,15 +1024,10 @@ setInterval(() => {
       loser
     );
 
-    io.emit(
-      "update",
-      gameState
-    );
+    broadcastState();
 
     return;
   }
-
-  // TOTAL LOSE
 
   if (
 
@@ -933,18 +1053,12 @@ setInterval(() => {
       loser
     );
 
-    io.emit(
-      "update",
-      gameState
-    );
+    broadcastState();
 
     return;
   }
 
-  io.emit(
-    "update",
-    gameState
-  );
+  broadcastState();
 
 }, 100);
 
