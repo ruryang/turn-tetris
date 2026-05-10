@@ -323,11 +323,29 @@ function getRankClass(rank) {
     case "a":
       return "rank-a";
 
+    case "a-": 
+      return "rank-aminus";
+
     case "b+":
       return "rank-bplus";
 
     case "b":
       return "rank-b";
+
+    case "b-": 
+      return "rank-bminus";
+
+    case "c+":
+      return "rank-cplus";
+    case "c":
+      return "rank-c";
+    case "c-":
+      return "rank-cminus";
+
+    case "d+":
+      return "rank-dplus";
+    case "d":
+      return "rank-d";
 
     case "z":
       return "rank-z";
@@ -439,7 +457,7 @@ window.join = () => {
     return;
   }
 
-  if (name.length > 16) {
+  if (name.length > 20) {
 
     alert(
       "닉네임이 너무 깁니다."

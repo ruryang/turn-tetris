@@ -580,15 +580,25 @@ img {
 .rank-x { color: #ff9933; }
 .rank-u { color: #b266ff; }
 .rank-ss { color: #4da6ff; }
+
 .rank-splus { color: #33ccff; }
 .rank-s { color: #33cc66; }
+.rank-sminus { color: #33cc66; }
+
 .rank-aplus { color: #66ff66; }
 .rank-a { color: #99ff66; }
+.rank-aminus { color: #33cc66; }
 
-.rank-bplus,
-.rank-b {
-  color: #bbbbbb;
-}
+.rank-bplus { color: #66ff66; }
+.rank-b { color: #99ff66; }
+.rank-bminus { color: #33cc66; }
+
+.rank-cplus { color: #66ff66; }
+.rank-c { color: #99ff66; }
+.rank-cminus { color: #33cc66; }
+
+.rank-dplus { color: #66ff66; }
+.rank-d { color: #99ff66; }
 
 .rank-z { color: #ff66cc; }
 .rank-unranked { color: #666; }
