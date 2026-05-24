@@ -1135,3 +1135,18 @@ img {
     max-width: 140px;
   }
 }
+
+/* =========================
+   OVERTIME TIMER
+   턴 시간 소진 후 총 시간 표시
+========================= */
+
+.overtime-timer {
+  color: #ff9933 !important;
+  animation: overtimePulse 1s infinite;
+}
+
+@keyframes overtimePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

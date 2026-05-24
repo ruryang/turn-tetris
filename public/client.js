@@ -793,21 +793,54 @@ setInterval(() => {
     sanitize(currentName)
     + " TURN";
 
-  const timeLeft =
-    Math.ceil(
+  // ========================
+  // 타이머: 턴 시간 → 총 시간 전환
+  // ========================
 
-      state.turnTime[
-        state.currentPlayer
-      ]
+  const turnLeft =
+    state.turnTime[
+      state.currentPlayer
+    ];
 
+  const totalLeft =
+    state.totalTime[
+      state.currentPlayer
+    ];
+
+  if (turnLeft > 0) {
+
+    // 턴 시간 남아있으면 턴 시간 표시
+    timerEl.textContent =
+      Math.ceil(turnLeft);
+
+    timerEl.style.color = "";
+
+    timerEl.classList.remove(
+      "danger-timer",
+      "overtime-timer"
     );
 
-  timerEl.textContent =
-    timeLeft;
+    if (turnLeft <= 10) {
 
-  timerEl.classList.remove(
-    "danger-timer"
-  );
+      timerEl.classList.add(
+        "danger-timer"
+      );
+    }
+
+  } else {
+
+    // 턴 시간 소진 → 총 시간 표시
+    timerEl.textContent =
+      Math.ceil(totalLeft);
+
+    timerEl.classList.remove(
+      "danger-timer"
+    );
+
+    timerEl.classList.add(
+      "overtime-timer"
+    );
+  }
 
   sideA.classList.remove(
     "active-player",
@@ -834,11 +867,7 @@ setInterval(() => {
     );
   }
 
-  if (timeLeft <= 10) {
-
-    timerEl.classList.add(
-      "danger-timer"
-    );
+  if (turnLeft <= 0 || turnLeft <= 10) {
 
     if (
       state.currentPlayer === "A"
@@ -899,6 +928,39 @@ setInterval(() => {
 }, 100);
 
 // ========================
+// TOAST 알림 (alert 대체)
+// ========================
+
+function showToast(msg, color = "rgba(255,80,80,0.92)") {
+
+  const toast = document.createElement("div");
+
+  toast.textContent = msg;
+
+  toast.style.cssText = `
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${color};
+    color: white;
+    padding: 14px 28px;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 99999;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    text-align: center;
+    white-space: nowrap;
+  `;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ========================
 // RESULT
 // ========================
 
@@ -907,9 +969,10 @@ socket.on(
 
   (player) => {
 
-    alert(
-      sanitize(player) +
-      " 턴 시간 패배!"
+    // alert 대신 토스트로 표시 — 게임은 계속됨
+    showToast(
+      sanitize(player) + " 턴 시간 종료! 총 시간 소모 중...",
+      "rgba(255, 140, 0, 0.92)"
     );
   }
 );
@@ -919,9 +982,9 @@ socket.on(
 
   (player) => {
 
-    alert(
-      sanitize(player) +
-      " 총 시간 패배!"
+    showToast(
+      sanitize(player) + " 총 시간 패배!",
+      "rgba(220, 30, 30, 0.95)"
     );
   }
 );
