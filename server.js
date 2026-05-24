@@ -164,16 +164,20 @@ const rankTotalTime = {
 function getTurnTime(rank) {
 
   return (
-    rankTurnTime[rank] ||
-    120
+    rankTurnTime[
+      String(rank || "UNRANKED")
+        .toUpperCase()
+    ] || 120
   );
 }
 
 function getTotalTime(rank) {
 
   return (
-    rankTotalTime[rank] ||
-    1200
+    rankTotalTime[
+      String(rank || "UNRANKED")
+        .toUpperCase()
+    ] || 600
   );
 }
 
@@ -204,9 +208,19 @@ function createState(
       B: 0
     },
 
+    totalTimeMax: {
+      A: 0,
+      B: 0
+    },
+
     turnTime: {
       A: 0,
       B: 0
+    },
+
+    timeoutPlayed: {
+      A: false,
+      B: false
     },
 
     currentPlayer: "A",
@@ -716,15 +730,27 @@ io.on(
             return;
           }
 
-          gameState.totalTime.A =
+          const totalA =
             getTotalTime(
               userA.rank
             );
 
-          gameState.totalTime.B =
+          const totalB =
             getTotalTime(
               userB.rank
             );
+
+          gameState.totalTime.A =
+            totalA;
+
+          gameState.totalTime.B =
+            totalB;
+
+          gameState.totalTimeMax.A =
+            totalA;
+
+          gameState.totalTimeMax.B =
+            totalB;
 
           gameState.turnTime.A =
             getTurnTime(
@@ -735,6 +761,12 @@ io.on(
             getTurnTime(
               userB.rank
             );
+
+          gameState.timeoutPlayed.A = 
+            false;
+            
+          gameState.timeoutPlayed.B = 
+            false;
 
           gameState.currentPlayer =
             "A";
@@ -754,53 +786,57 @@ io.on(
     // TURN
     // ========================
 
-    socket.on(
-      "toggleTurn",
+  socket.on(
+    "toggleTurn",
 
-      () => {
+    () => {
 
-        if (
-          gameState.phase !==
-          "PLAYING"
-        ) return;
+      if (
+        gameState.phase !==
+        "PLAYING"
+      ) return;
 
-        if (
-          socket.player !==
-          gameState.currentPlayer
-        ) return;
+      if (
+        socket.player !==
+        gameState.currentPlayer
+      ) return;
 
-        gameState.currentPlayer =
+      gameState.currentPlayer =
 
-          gameState
-            .currentPlayer ===
-          "A"
+        gameState
+          .currentPlayer ===
+        "A"
 
-            ? "B"
+          ? "B"
 
-            : "A";
+          : "A";
 
-        const currentUser =
-          findUserBySocket(
+      const currentUser =
+        findUserBySocket(
 
-            gameState.slots[
-              gameState
-                .currentPlayer
-            ]
-          );
+          gameState.slots[
+            gameState
+              .currentPlayer
+          ]
+        );
 
-        gameState.turnTime[
-          gameState.currentPlayer
-        ] =
-          getTurnTime(
-            currentUser?.rank
-          );
+      gameState.turnTime[
+        gameState.currentPlayer
+      ] =
+        getTurnTime(
+          currentUser?.rank
+        );
 
-        gameState.lastUpdate =
-          Date.now();
+      gameState.timeoutPlayed[
+        gameState.currentPlayer
+      ] = false;
 
-        broadcastState();
-      }
-    );
+      gameState.lastUpdate =
+        Date.now();
+
+      broadcastState();
+    }
+  );
 
     // ========================
     // ADMIN END
@@ -980,7 +1016,6 @@ setInterval(() => {
     Date.now();
 
   const delta =
-
     (
       now -
       gameState.lastUpdate
@@ -992,74 +1027,81 @@ setInterval(() => {
   const current =
     gameState.currentPlayer;
 
-  gameState.turnTime[
-    current
-  ] -= delta;
-
-  gameState.totalTime[
-    current
-  ] -= delta;
-
   if (
     gameState.turnTime[
       current
-    ] <= 0
+    ] > 0
   ) {
 
-    const loser =
-      current;
+    gameState.turnTime[
+      current
+    ] -= delta;
 
-    const users =
-      gameState.users;
+    if (
+      gameState.turnTime[
+        current
+      ] <= 0
+    ) {
 
-    clearPlayers();
+      gameState.turnTime[
+        current
+      ] = 0;
 
-    gameState =
-      createState(users);
+      if (
+        !gameState.timeoutPlayed[
+          current
+        ]
+      ) {
 
-    io.emit(
-      "timeout",
-      loser
-    );
+        gameState.timeoutPlayed[
+          current
+        ] = true;
 
-    broadcastState();
+        io.emit(
+          "timeout",
+          current
+        );
+      }
+    }
 
-    return;
-  }
-
-  if (
+  } else {
 
     gameState.totalTime[
       current
-    ] <= 0
+    ] -= delta;
 
-  ) {
+    if (
+      gameState.totalTime[
+        current
+      ] <= 0
+    ) {
 
-    const loser =
-      current;
+      const loser =
+        current;
 
-    const users =
-      gameState.users;
+      const users =
+        gameState.users;
 
-    clearPlayers();
+      clearPlayers();
 
-    gameState =
-      createState(users);
+      gameState =
+        createState(users);
 
-    io.emit(
-      "gameOver",
-      loser
-    );
+      io.emit(
+        "gameOver",
+        loser
+      );
 
-    broadcastState();
+      broadcastState();
 
-    return;
+      return;
+    }
+
   }
 
   broadcastState();
 
 }, 100);
-
 // ========================
 // START
 // ========================

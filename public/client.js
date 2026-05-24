@@ -872,7 +872,11 @@ setInterval(() => {
       state.totalTime.B
     );
 
-  const max = 1200;
+  const maxA =
+    state.totalTimeMax?.A || 1200;
+
+  const maxB =
+    state.totalTimeMax?.B || 1200;
 
   document
     .getElementById("hpA")
@@ -880,7 +884,7 @@ setInterval(() => {
 
     (
       state.totalTime.A
-      / max
+      / maxA
     ) * 100 + "%";
 
   document
@@ -889,7 +893,7 @@ setInterval(() => {
 
     (
       state.totalTime.B
-      / max
+      / maxB
     ) * 100 + "%";
 
 }, 100);
